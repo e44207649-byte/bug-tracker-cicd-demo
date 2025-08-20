@@ -32,16 +32,16 @@ jobs:
           JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
           echo "Normalized URL: $JIRA_URL"
           
-          # Test basic auth
-          auth_header=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
           echo "Auth header created successfully"
           
-          # Test API endpoint with HTTP/1.1 (fixes curl error 43)
-          echo "Testing Jira API endpoint with HTTP/1.1..."
+          # Test API endpoint with proper headers
+          echo "Testing Jira API endpoint..."
           echo "Full URL: $JIRA_URL/rest/api/2/myself"
-          curl -v --http1.1 \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Basic $auth_header" \
+          curl -v \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
             "$JIRA_URL/rest/api/2/myself" \
             -o /tmp/jira_test.json
           
@@ -56,10 +56,14 @@ jobs:
           JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
           JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
           
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
+          
           # Check if issue exists
           echo "Issue URL: $JIRA_URL/rest/api/2/issue/DEMO-2"
-          curl -v --http1.1 \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+          curl -v \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
             "$JIRA_URL/rest/api/2/issue/DEMO-2" \
             -o /tmp/issue_check.json || echo "Issue check failed"
           
@@ -74,10 +78,14 @@ jobs:
           JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
           JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
           
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
+          
           # Get projects list
           echo "Projects URL: $JIRA_URL/rest/api/2/project"
-          curl -v --http1.1 \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+          curl -v \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
             "$JIRA_URL/rest/api/2/project" \
             -o /tmp/projects.json || echo "Projects check failed"
           
@@ -92,12 +100,15 @@ jobs:
           JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
           JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
           
-          # Simple comment test with HTTP/1.1
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
+          
+          # Test comment creation
           echo "Comment URL: $JIRA_URL/rest/api/2/issue/DEMO-2/comment"
-          curl -v --http1.1 -X POST \
+          curl -v -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
-            -d '{"body": "Test comment from GitHub Actions - Fixed URL"}' \
+            -H "Authorization: Basic $AUTH_HEADER" \
+            -d '{"body": "Test comment from GitHub Actions - Fixed Authentication"}' \
             "$JIRA_URL/rest/api/2/issue/DEMO-2/comment" \
             -o /tmp/comment_response.json
           
@@ -106,31 +117,35 @@ jobs:
           
       - name: 🔍 Test Different Approaches
         run: |
-          echo "Testing different curl approaches with HTTP/1.1..."
+          echo "Testing different curl approaches..."
           
           # Normalize URL (remove trailing slash)
           JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
           JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
           
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
+          
           # Test 1: Simple GET request first
           echo "=== Test 1: Simple GET request ==="
-          curl -v --http1.1 \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+          curl -v \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
             "$JIRA_URL/rest/api/2/issue/DEMO-2" || echo "GET failed"
           
           # Test 2: POST with minimal payload
           echo "=== Test 2: POST with minimal payload ==="
-          curl -v --http1.1 -X POST \
+          curl -v -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            -H "Authorization: Basic $AUTH_HEADER" \
             --data-raw '{"body":"Simple test"}' \
             "$JIRA_URL/rest/api/2/issue/DEMO-2/comment" || echo "Simple POST failed"
           
           # Test 3: POST with file
           echo "=== Test 3: POST with file ==="
           echo '{"body":"Test from file"}' > /tmp/test_payload.json
-          curl -v --http1.1 -X POST \
+          curl -v -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            -H "Authorization: Basic $AUTH_HEADER" \
             --data @/tmp/test_payload.json \
             "$JIRA_URL/rest/api/2/issue/DEMO-2/comment" || echo "File POST failed"
