@@ -3,6 +3,7 @@
 ## 📋 Pre-Demo Checklist (30 minutes before presentation)
 
 ### 1. Environment Setup
+
 - [ ] **GitHub Repository**: Ensure repo is public and accessible
 - [ ] **Vercel Account**: Connected to GitHub with proper permissions
 - [ ] **Jira Instance**: Test ticket (DEMO-123) created and accessible
@@ -11,6 +12,7 @@
 ### 2. Required Secrets Configuration
 
 #### GitHub Repository Secrets
+
 Navigate to: `Settings > Secrets and Variables > Actions`
 
 ```bash
@@ -26,28 +28,33 @@ JIRA_USER_EMAIL=your_email@company.com
 ```
 
 #### How to Get Vercel Values
-1. **VERCEL_TOKEN**: 
+
+1. **VERCEL_TOKEN**:
+
    - Go to https://vercel.com/account/tokens
    - Create new token with appropriate scope
-   
 2. **VERCEL_ORG_ID** and **VERCEL_PROJECT_ID**:
+
    - Run locally: `npx vercel`
    - Follow setup prompts
    - Check `.vercel/project.json` for IDs
 
 #### How to Get Jira Values
+
 1. **JIRA_API_TOKEN**:
+
    - Go to https://id.atlassian.com/manage-profile/security/api-tokens
    - Create API token
-   
 2. **JIRA_BASE_URL**: Your Jira domain (https://company.atlassian.net)
 3. **JIRA_USER_EMAIL**: Your Jira account email
 
 ### 3. Test Environment URLs
+
 - **Production**: `https://bug-tracker-cicd-demo.vercel.app`
 - **Staging**: `https://bug-tracker-demo-staging.vercel.app`
 
 ### 4. Local Testing Commands
+
 ```bash
 # Install dependencies
 npm install
@@ -73,6 +80,7 @@ npm run cypress:open
 ## 🧪 Pre-Demo Test Script
 
 ### Test 1: Verify Intentional Bugs
+
 ```bash
 # Run tests - should see 2 failing tests
 npm test
@@ -83,6 +91,7 @@ npm test
 ```
 
 ### Test 2: Verify Local Application
+
 ```bash
 # Start dev server
 npm run dev
@@ -95,6 +104,7 @@ npm run dev
 ```
 
 ### Test 3: Verify Pipeline (Optional)
+
 ```bash
 # Create test branch
 git checkout -b test/pipeline-check
@@ -117,6 +127,7 @@ git push origin --delete test/pipeline-check
 ## 🎭 Demo Day Setup (5 minutes before)
 
 ### Browser Setup
+
 - [ ] **Large Font**: Set browser zoom to 125%
 - [ ] **Multiple Tabs Ready**:
   - Tab 1: Production site (`https://bug-tracker-cicd-demo.vercel.app`)
@@ -126,16 +137,19 @@ git push origin --delete test/pipeline-check
   - Tab 5: Local development (`http://localhost:3000`)
 
 ### Terminal Setup
+
 - [ ] **Large Font**: Terminal font size 24pt minimum
 - [ ] **Working Directory**: Positioned in project root
 - [ ] **Clean State**: No running processes
 
 ### Code Editor Setup
+
 - [ ] **Large Font**: Editor font size 18pt minimum
 - [ ] **File Ready**: `pages/index.js` bookmarked for quick access
 - [ ] **Theme**: High contrast theme for visibility
 
 ### Network/Backup Plans
+
 - [ ] **Screenshots**: Prepared screenshots of each demo step
 - [ ] **Screen Recording**: Optional - record successful run as backup
 - [ ] **Presentation Slides**: Available as fallback
@@ -146,6 +160,7 @@ git push origin --delete test/pipeline-check
 ## 🚨 Troubleshooting Common Issues
 
 ### Issue: Tests Not Running
+
 ```bash
 # Clear Jest cache
 npm test -- --clearCache
@@ -156,6 +171,7 @@ npm install
 ```
 
 ### Issue: Build Failures
+
 ```bash
 # Check Node version (should be 18+)
 node --version
@@ -166,16 +182,19 @@ npm run build
 ```
 
 ### Issue: GitHub Actions Failing
+
 - **Secrets**: Verify all secrets are correctly set
 - **Permissions**: Ensure GitHub Actions has repository access
 - **Branch Protection**: Check if branch protection rules are blocking
 
 ### Issue: Vercel Deployment Failing
+
 - **Token**: Verify Vercel token has correct permissions
 - **Limits**: Check Vercel account limits
 - **Build**: Ensure local build works first
 
 ### Issue: Jira Integration Not Working
+
 - **API Token**: Verify token has correct permissions
 - **Ticket**: Ensure DEMO-123 ticket exists
 - **URL**: Verify Jira base URL is correct
@@ -185,11 +204,13 @@ npm run build
 ## 📖 Backup Presentation Materials
 
 ### If Complete Technical Failure
+
 1. **Screenshot Deck**: Prepared screenshots of each step
 2. **Concept Presentation**: Focus on CI/CD concepts vs live demo
 3. **Architecture Diagram**: Visual explanation of pipeline stages
 
 ### If Partial Failure
+
 - **Local Demo Only**: Show bug fix and tests locally
 - **Pipeline Screenshots**: Walk through completed pipeline run
 - **Jira Screenshots**: Show ticket integration examples
@@ -199,6 +220,7 @@ npm run build
 ## 🎯 Success Criteria
 
 ### Technical Success
+
 - [ ] Critical filter bug demonstrates clearly
 - [ ] Tests show failing cases appropriately
 - [ ] Pipeline runs end-to-end successfully
@@ -207,6 +229,7 @@ npm run build
 - [ ] Jira integration updates ticket
 
 ### Presentation Success
+
 - [ ] Audience can see all screen content clearly
 - [ ] Demo timing stays within 30 minutes
 - [ ] Key concepts are explained clearly
@@ -218,11 +241,13 @@ npm run build
 ## 📞 Emergency Contacts
 
 ### Technical Support
+
 - **Repository**: [Link to GitHub repo]
 - **Vercel Dashboard**: [Link to Vercel project]
 - **Jira Project**: [Link to Jira project]
 
 ### Demo Support
+
 - **Backup Presenter**: [Name and contact]
 - **Technical Assistant**: [Name and contact]
 - **Event Coordinator**: [Name and contact]
