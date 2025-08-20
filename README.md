@@ -6,6 +6,8 @@ A complete CI/CD pipeline demonstration for the Oklahoma IT Symposium, showcasin
 
 This project demonstrates a complete CI/CD pipeline using a bug tracking dashboard that ironically contains bugs. The live demo shows how to fix a "critical filter" bug and watch it flow through an automated pipeline from code commit to production deployment.
 
+**✨ Now with full CI/CD pipeline integration including Jira automation!**
+
 ### Key Demo Story
 - **Application**: Bug tracking dashboard (React/Next.js)
 - **Demo Bug**: Critical filter doesn't work (shows all bugs instead of just critical)
