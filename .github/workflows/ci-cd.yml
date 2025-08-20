@@ -84,7 +84,6 @@ jobs:
           wait-on-timeout: 120
           browser: chrome
           record: false
-          screenshot-on-failure: true
           
       - name: 📸 Upload Screenshots
         uses: actions/upload-artifact@v4
