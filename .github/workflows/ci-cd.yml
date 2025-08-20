@@ -160,9 +160,18 @@ jobs:
           
       - name: 🏥 Health Check
         run: |
-          echo "✅ Deployment completed successfully"
-          echo "📱 Preview URL: ${{ steps.deploy.outputs.preview-url }}"
-          echo "ℹ️  Skipping HTTP check for preview deployments (may require auth)"
+          echo "Waiting for deployment to be ready..."
+          sleep 30
+          echo "Testing deployment URL: ${{ steps.deploy.outputs.preview-url }}"
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.deploy.outputs.preview-url }}")
+          if [ $response -eq 200 ]; then
+            echo "✅ Staging deployment is healthy (HTTP 200)"
+          elif [ $response -eq 401 ]; then
+            echo "✅ Staging deployment is healthy (HTTP 401 - Protected by Vercel auth)"
+          else
+            echo "❌ Staging deployment failed health check (HTTP $response)"
+            exit 1
+          fi
           
       - name: 💬 Comment on PR
         if: github.event_name == 'pull_request'
