@@ -144,6 +144,8 @@ jobs:
     environment:
       name: staging
       url: ${{ steps.deploy.outputs.url }}
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.preview-url }}
     
     steps:
       - name: 📦 Checkout Code
@@ -237,7 +239,7 @@ jobs:
             -H "Accept: application/json" \
             -H "Authorization: Basic $AUTH_HEADER" \
             -d '{
-              "body": "🚀 *Staging Deployment Complete*\n\n*Environment:* Staging\n*Deployment URL:* Available via Vercel dashboard\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}\n*Author:* ${{ github.actor }}\n\n✅ All tests passed\n✅ Quality checks passed\n✅ Deployment successful\n\nReady for testing and review!"
+              "body": "🚀 *Staging Deployment Complete*\n\n*Environment:* Staging\n*Deployment URL:* ${{ needs.deploy-staging.outputs.preview-url || 'Available via Vercel dashboard' }}\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}\n*Author:* ${{ github.actor }}\n\n✅ All tests passed\n✅ Quality checks passed\n✅ Deployment successful\n\nReady for testing and review!"
             }' \
             "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
             -w "HTTP_STATUS:%{http_code}" \
