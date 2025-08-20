@@ -82,7 +82,7 @@ npm run cypress:run  # Run Cypress tests headlessly
 ## 🎭 Demo Script (30 minutes)
 
 ### Minutes 1-4: Show the Problem
-1. Open production site: `https://bug-tracker-demo.vercel.app`
+1. Open production site: `https://bug-tracker-cicd-demo.vercel.app`
 2. Click "Critical" filter
 3. **Point out**: Shows all bugs instead of just critical
 4. **Explain**: This is a production bug that needs fixing
@@ -184,7 +184,7 @@ All interactive elements have `data-testid` attributes for reliable testing:
 
 ### Environments
 - **Staging**: `https://bug-tracker-demo-staging.vercel.app`
-- **Production**: `https://bug-tracker-demo.vercel.app`
+- **Production**: `https://bug-tracker-cicd-demo.vercel.app`
 
 ### Deployment Strategy
 - Automatic staging deployment on develop/main branch

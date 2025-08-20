@@ -44,7 +44,7 @@ JIRA_USER_EMAIL=your_email@company.com
 3. **JIRA_USER_EMAIL**: Your Jira account email
 
 ### 3. Test Environment URLs
-- **Production**: `https://bug-tracker-demo.vercel.app`
+- **Production**: `https://bug-tracker-cicd-demo.vercel.app`
 - **Staging**: `https://bug-tracker-demo-staging.vercel.app`
 
 ### 4. Local Testing Commands
@@ -119,7 +119,7 @@ git push origin --delete test/pipeline-check
 ### Browser Setup
 - [ ] **Large Font**: Set browser zoom to 125%
 - [ ] **Multiple Tabs Ready**:
-  - Tab 1: Production site (`https://bug-tracker-demo.vercel.app`)
+  - Tab 1: Production site (`https://bug-tracker-cicd-demo.vercel.app`)
   - Tab 2: GitHub repository
   - Tab 3: GitHub Actions
   - Tab 4: Jira ticket (DEMO-123)

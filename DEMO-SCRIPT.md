@@ -4,7 +4,7 @@
 
 ### Technical Preparation (1 hour before)
 - [ ] Verify all environments are accessible
-  - [ ] Production: `https://bug-tracker-demo.vercel.app`
+  - [ ] Production: `https://bug-tracker-cicd-demo.vercel.app`
   - [ ] Staging: `https://bug-tracker-demo-staging.vercel.app`
   - [ ] GitHub repository is accessible
 - [ ] Test local development environment
@@ -35,7 +35,7 @@
 > "Good morning! I'm here to show you how modern development teams deploy code with confidence. Today, we're going to fix a production bug and watch it flow through a complete CI/CD pipeline from my laptop to production in under 30 minutes."
 
 **Show production site immediately**
-- Open: `https://bug-tracker-demo.vercel.app`
+- Open: `https://bug-tracker-cicd-demo.vercel.app`
 - Point to the irony: "This is a bug tracking dashboard... that has bugs in it."
 
 ---
@@ -239,7 +239,7 @@ git push origin fix/DEMO-123-critical-filter
 
 ### Verify Production Fix (3 minutes)
 **When deployment completes:**
-- Open: `https://bug-tracker-demo.vercel.app`
+- Open: `https://bug-tracker-cicd-demo.vercel.app`
 - Test critical filter → Now works correctly!
 - Show environment indicator shows "production"
 

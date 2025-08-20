@@ -247,7 +247,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: https://bug-tracker-demo.vercel.app
+      url: https://bug-tracker-cicd-demo.vercel.app
     
     steps:
       - name: 📦 Checkout Code
@@ -268,7 +268,7 @@ jobs:
           echo "Waiting for production deployment to be ready..."
           sleep 45
           for i in {1..5}; do
-            response=$(curl -s -o /dev/null -w "%{http_code}" "https://bug-tracker-demo.vercel.app")
+            response=$(curl -s -o /dev/null -w "%{http_code}" "https://bug-tracker-cicd-demo.vercel.app")
             if [ $response -eq 200 ]; then
               echo "✅ Production deployment is healthy (attempt $i)"
               break
@@ -285,7 +285,7 @@ jobs:
       - name: 🎉 Production Deployment Success
         run: |
           echo "🎉 Production deployment successful!"
-          echo "🌟 URL: https://bug-tracker-demo.vercel.app"
+          echo "🌟 URL: https://bug-tracker-cicd-demo.vercel.app"
           echo "📊 Commit: ${{ github.sha }}"
           echo "👤 Deployed by: ${{ github.actor }}"
 
@@ -316,7 +316,7 @@ jobs:
             🌟 *Production Deployment Complete*
             
             *Environment:* Production
-            *URL:* https://bug-tracker-demo.vercel.app
+            *URL:* https://bug-tracker-cicd-demo.vercel.app
             *Commit:* ${{ github.sha }}
             *Branch:* ${{ github.ref_name }}
             *Author:* ${{ github.actor }}
@@ -365,7 +365,7 @@ jobs:
           echo "✅ Production deployment successful"
           echo "✅ Health checks passed"
           echo ""
-          echo "🌟 Production URL: https://bug-tracker-demo.vercel.app"
+          echo "🌟 Production URL: https://bug-tracker-cicd-demo.vercel.app"
           echo "🧪 Staging URL: https://bug-tracker-demo-staging.vercel.app"
           echo ""
           echo "📊 Commit: ${{ github.sha }}"
