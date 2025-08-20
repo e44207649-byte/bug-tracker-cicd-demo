@@ -222,26 +222,25 @@ jobs:
         if: steps.jira-key.outputs.issue-key != ''
         continue-on-error: true
         run: |
-          COMMENT_BODY=$(cat <<'EOF'
-          {
-            "body": "🚀 *Staging Deployment Complete*\n\n*Environment:* Staging\n*Deployment URL:* Available via Vercel dashboard\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}\n*Author:* ${{ github.actor }}\n\n✅ All tests passed\n✅ Quality checks passed\n✅ Deployment successful\n\nReady for testing and review!"
-          }
-          EOF
-          )
-          
           echo "Adding comment to Jira ticket: ${{ steps.jira-key.outputs.issue-key }}"
           
-          response=$(curl -s -w "%{http_code}" -X POST \
+          # Create properly escaped JSON for Jira comment
+          curl -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} | base64)" \
-            -d "$COMMENT_BODY" \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment")
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            -d '{
+              "body": "🚀 *Staging Deployment Complete*\\n\\n*Environment:* Staging\\n*Deployment URL:* Available via Vercel dashboard\\n*Commit:* ${{ github.sha }}\\n*Branch:* ${{ github.ref_name }}\\n*Author:* ${{ github.actor }}\\n\\n✅ All tests passed\\n✅ Quality checks passed\\n✅ Deployment successful\\n\\nReady for testing and review!"
+            }' \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
+            -w "HTTP_STATUS:%{http_code}" \
+            -o /tmp/jira_response.json
           
-          http_code=$(echo "$response" | tail -c 4)
-          if [ "$http_code" = "201" ]; then
+          # Check if the request was successful
+          if grep -q "HTTP_STATUS:201" /tmp/jira_response.json 2>/dev/null; then
             echo "✅ Successfully added comment to Jira ticket"
           else
-            echo "⚠️ Jira comment failed (HTTP $http_code) - ticket may not exist"
+            echo "⚠️ Jira comment may have failed - continuing anyway"
+            cat /tmp/jira_response.json 2>/dev/null || echo "(no response file)"
           fi
 
   # ==========================================
@@ -321,54 +320,61 @@ jobs:
         if: steps.jira-key.outputs.issue-key != ''
         continue-on-error: true
         run: |
-          COMMENT_BODY=$(cat <<'EOF'
-          {
-            "body": "🌟 *Production Deployment Complete*\\n\\n*Environment:* Production\\n*URL:* https://bug-tracker-cicd-demo.vercel.app\\n*Commit:* ${{ github.sha }}\\n*Branch:* ${{ github.ref_name }}\\n*Author:* ${{ github.actor }}\\n*Deployed at:* $(date -u '+%Y-%m-%d %H:%M:%S UTC')\\n\\n✅ All quality gates passed\\n✅ Staging tests successful\\n✅ Production deployment verified\\n✅ Health checks passed\\n\\n🎉 Feature is now live in production!"
-          }
-          EOF
-          )
-          
           echo "Adding production comment to Jira ticket: ${{ steps.jira-key.outputs.issue-key }}"
           
-          response=$(curl -s -w "%{http_code}" -X POST \
+          # Create properly escaped JSON for Jira comment
+          curl -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} | base64)" \
-            -d "$COMMENT_BODY" \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment")
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            -d '{
+              "body": "🌟 *Production Deployment Complete*\\n\\n*Environment:* Production\\n*URL:* https://bug-tracker-cicd-demo.vercel.app\\n*Commit:* ${{ github.sha }}\\n*Branch:* ${{ github.ref_name }}\\n*Author:* ${{ github.actor }}\\n*Deployed at:* '$(date -u '+%Y-%m-%d %H:%M:%S UTC')'\\n\\n✅ All quality gates passed\\n✅ Staging tests successful\\n✅ Production deployment verified\\n✅ Health checks passed\\n\\n🎉 Feature is now live in production!"
+            }' \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
+            -w "HTTP_STATUS:%{http_code}" \
+            -o /tmp/jira_prod_response.json
           
-          http_code=$(echo "$response" | tail -c 4)
-          if [ "$http_code" = "201" ]; then
+          # Check if the request was successful
+          if grep -q "HTTP_STATUS:201" /tmp/jira_prod_response.json 2>/dev/null; then
             echo "✅ Successfully added production comment to Jira ticket"
           else
-            echo "⚠️ Jira comment failed (HTTP $http_code) - ticket may not exist"
+            echo "⚠️ Jira comment may have failed - continuing anyway"
+            cat /tmp/jira_prod_response.json 2>/dev/null || echo "(no response file)"
           fi
           
       - name: 🎯 Transition Jira Issue to Done
         if: steps.jira-key.outputs.issue-key != ''
         continue-on-error: true
         run: |
-          TRANSITION_BODY=$(cat <<'EOF'
-          {
-            "transition": {
-              "name": "Done"
-            }
-          }
-          EOF
-          )
-          
           echo "Transitioning Jira ticket to Done: ${{ steps.jira-key.outputs.issue-key }}"
           
-          response=$(curl -s -w "%{http_code}" -X POST \
+          # First, get available transitions to find the correct transition ID
+          echo "Getting available transitions..."
+          curl -X GET \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} | base64)" \
-            -d "$TRANSITION_BODY" \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/transitions")
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/transitions" \
+            -o /tmp/transitions.json
           
-          http_code=$(echo "$response" | tail -c 4)
-          if [ "$http_code" = "204" ]; then
+          # Try to transition to Done (this might fail if transition doesn't exist)
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            -d '{
+              "transition": {
+                "name": "Done"
+              }
+            }' \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/transitions" \
+            -w "HTTP_STATUS:%{http_code}" \
+            -o /tmp/jira_transition_response.json
+          
+          # Check if the request was successful
+          if grep -q "HTTP_STATUS:204" /tmp/jira_transition_response.json 2>/dev/null; then
             echo "✅ Successfully transitioned Jira ticket to Done"
           else
-            echo "⚠️ Jira transition failed (HTTP $http_code) - transition may not be available"
+            echo "⚠️ Jira transition may have failed - this is normal if 'Done' transition doesn't exist"
+            echo "Available transitions:"
+            cat /tmp/transitions.json 2>/dev/null || echo "(could not get transitions)"
           fi
           
       - name: ℹ️ Jira Integration Note
