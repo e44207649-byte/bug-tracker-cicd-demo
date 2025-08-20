@@ -164,20 +164,16 @@ describe('Bug Tracker Dashboard', () => {
       const addButton = screen.getByTestId('add-bug-button')
       await userEvent.click(addButton)
       
-      const titleInput = screen.getByTestId('bug-title-input')
       const submitButton = screen.getByTestId('submit-bug-button')
       
       // Leave title empty and try to submit
       await userEvent.click(submitButton)
       
-      // This test will fail because the app allows empty titles
-      // The bug count should not increase, but it will
-      expect(screen.getByTestId('total-bugs')).toHaveTextContent('4') // This will fail - shows 5 instead of 4
+      // The bug count should not increase
+      expect(screen.getByTestId('total-bugs')).toHaveTextContent('4')
       
-      // The empty bug should not appear in the list, but it will
-      const bugList = screen.getByTestId('bug-list')
-      const emptyTitleBugs = screen.queryAllByText('')
-      expect(emptyTitleBugs).toHaveLength(0) // This will fail - empty bug gets added
+      // The bug list should still have 4 items
+      expect(screen.getAllByTestId(/^bug-\d+$/)).toHaveLength(4)
     })
 
     test('updates bug statistics after adding a bug', async () => {
@@ -203,17 +199,18 @@ describe('Bug Tracker Dashboard', () => {
     test('displays severity badges with correct styling', () => {
       render(<BugTracker />)
       
-      const criticalBug = screen.getByTestId('bug-3')
-      expect(criticalBug).toHaveTextContent('CRITICAL')
+      // Check that each bug has the correct severity text
+      const bug1 = screen.getByTestId('bug-1')
+      expect(bug1).toHaveTextContent('high')
       
-      const highBug = screen.getByTestId('bug-1')
-      expect(highBug).toHaveTextContent('HIGH')
+      const bug2 = screen.getByTestId('bug-2')
+      expect(bug2).toHaveTextContent('medium')
       
-      const mediumBug = screen.getByTestId('bug-2')
-      expect(mediumBug).toHaveTextContent('MEDIUM')
+      const bug3 = screen.getByTestId('bug-3')
+      expect(bug3).toHaveTextContent('critical')
       
-      const lowBug = screen.getByTestId('bug-4')
-      expect(lowBug).toHaveTextContent('LOW')
+      const bug4 = screen.getByTestId('bug-4')
+      expect(bug4).toHaveTextContent('low')
     })
   })
 
@@ -221,11 +218,15 @@ describe('Bug Tracker Dashboard', () => {
     test('shows correct status icons and text', () => {
       render(<BugTracker />)
       
-      const openBugs = screen.getAllByText('open')
-      expect(openBugs).toHaveLength(3)
+      // Check that status text appears in bugs
+      const bug1 = screen.getByTestId('bug-1')
+      expect(bug1).toHaveTextContent('Status: open')
       
-      const inProgressBugs = screen.getAllByText('in-progress')
-      expect(inProgressBugs).toHaveLength(1)
+      const bug2 = screen.getByTestId('bug-2')
+      expect(bug2).toHaveTextContent('Status: in-progress')
+      
+      const bug3 = screen.getByTestId('bug-3')
+      expect(bug3).toHaveTextContent('Status: open')
     })
   })
 

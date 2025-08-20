@@ -78,10 +78,14 @@ export default function BugTracker() {
   }, [bugs])
 
   const addBug = () => {
-    // INTENTIONAL BUG: No validation for empty title
+    // FIX: Added validation for empty title
+    if (!newBug.title.trim()) {
+      return // Don't add bug if title is empty
+    }
+    
     const bug = {
       id: Math.max(...bugs.map(b => b.id), 0) + 1,
-      title: newBug.title, // Should validate this is not empty
+      title: newBug.title,
       severity: newBug.severity,
       status: 'open',
       created: new Date().toISOString().split('T')[0],
