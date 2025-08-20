@@ -231,14 +231,22 @@
         run: |
           echo "Adding comment to Jira ticket: ${{ steps.jira-key.outputs.issue-key }}"
           
+          # Normalize URL (remove trailing slash)
+          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
+          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
+          
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
+          
           # Create properly escaped JSON for Jira comment
           curl -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
             -d '{
               "body": "🚀 *Staging Deployment Complete*\\n\\n*Environment:* Staging\\n*Deployment URL:* Available via Vercel dashboard\\n*Commit:* ${{ github.sha }}\\n*Branch:* ${{ github.ref_name }}\\n*Author:* ${{ github.actor }}\\n\\n✅ All tests passed\\n✅ Quality checks passed\\n✅ Deployment successful\\n\\nReady for testing and review!"
             }' \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
+            "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
             -w "HTTP_STATUS:%{http_code}" \
             -o /tmp/jira_response.json
           
@@ -329,14 +337,22 @@
         run: |
           echo "Adding production comment to Jira ticket: ${{ steps.jira-key.outputs.issue-key }}"
           
+          # Normalize URL (remove trailing slash)
+          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
+          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
+          
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
+          
           # Create properly escaped JSON for Jira comment
           curl -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
             -d '{
               "body": "🌟 *Production Deployment Complete*\\n\\n*Environment:* Production\\n*URL:* https://bug-tracker-cicd-demo.vercel.app\\n*Commit:* ${{ github.sha }}\\n*Branch:* ${{ github.ref_name }}\\n*Author:* ${{ github.actor }}\\n*Deployed at:* '$(date -u '+%Y-%m-%d %H:%M:%S UTC')'\\n\\n✅ All quality gates passed\\n✅ Staging tests successful\\n✅ Production deployment verified\\n✅ Health checks passed\\n\\n🎉 Feature is now live in production!"
             }' \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
+            "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
             -w "HTTP_STATUS:%{http_code}" \
             -o /tmp/jira_prod_response.json
           
@@ -354,24 +370,33 @@
         run: |
           echo "Transitioning Jira ticket to Done: ${{ steps.jira-key.outputs.issue-key }}"
           
+          # Normalize URL (remove trailing slash)
+          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
+          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
+          
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
+          
           # First, get available transitions to find the correct transition ID
           echo "Getting available transitions..."
           curl -X GET \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/transitions" \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
+            "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/transitions" \
             -o /tmp/transitions.json
           
           # Try to transition to Done (this might fail if transition doesn't exist)
           curl -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
             -d '{
               "transition": {
                 "name": "Done"
               }
             }' \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/transitions" \
+            "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/transitions" \
             -w "HTTP_STATUS:%{http_code}" \
             -o /tmp/jira_transition_response.json
           
