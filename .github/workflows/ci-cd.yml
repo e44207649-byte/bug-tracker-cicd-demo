@@ -203,6 +203,16 @@ jobs:
     if: contains(github.event.head_commit.message, 'DEMO-') || contains(github.event.pull_request.title, 'DEMO-')
     
     steps:
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🔑 Jira Login
+        uses: atlassian/gajira-login@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          
       - name: 📝 Extract Jira Issue Key
         id: jira-key
         run: |
@@ -234,10 +244,6 @@ jobs:
             ✅ Deployment successful
             
             Ready for testing and review!
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
   # ==========================================
   # DEPLOY TO PRODUCTION (MANUAL APPROVAL)
@@ -301,6 +307,16 @@ jobs:
     if: contains(github.event.head_commit.message, 'DEMO-')
     
     steps:
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🔑 Jira Login
+        uses: atlassian/gajira-login@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          
       - name: 📝 Extract Jira Issue Key
         id: jira-key
         run: |
@@ -330,21 +346,13 @@ jobs:
             ✅ Health checks passed
             
             🎉 Feature is now live in production!
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          
+            
       - name: 🎯 Transition Jira Issue to Done
         if: steps.jira-key.outputs.issue-key != ''
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.jira-key.outputs.issue-key }}
           transition: "Done"
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
   # ==========================================
   # NOTIFICATIONS & REPORTING
