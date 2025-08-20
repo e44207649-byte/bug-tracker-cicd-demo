@@ -227,6 +227,7 @@ jobs:
           
       - name: 📝 Add Staging Comment to Jira
         if: steps.jira-key.outputs.issue-key != ''
+        continue-on-error: true
         uses: atlassian/gajira-comment@v3
         with:
           issue: ${{ steps.jira-key.outputs.issue-key }}
@@ -244,6 +245,13 @@ jobs:
             ✅ Deployment successful
             
             Ready for testing and review!
+            
+      - name: ℹ️ Jira Integration Note
+        if: steps.jira-key.outputs.issue-key != ''
+        run: |
+          echo "ℹ️ Attempted to update Jira ticket: ${{ steps.jira-key.outputs.issue-key }}"
+          echo "If this fails, ensure the ticket exists in your Jira instance"
+          echo "For demo purposes, create tickets like DEMO-123, DEMO-124, etc."
 
   # ==========================================
   # DEPLOY TO PRODUCTION (MANUAL APPROVAL)
@@ -327,6 +335,7 @@ jobs:
           
       - name: 📝 Add Production Comment to Jira
         if: steps.jira-key.outputs.issue-key != ''
+        continue-on-error: true
         uses: atlassian/gajira-comment@v3
         with:
           issue: ${{ steps.jira-key.outputs.issue-key }}
@@ -349,10 +358,18 @@ jobs:
             
       - name: 🎯 Transition Jira Issue to Done
         if: steps.jira-key.outputs.issue-key != ''
+        continue-on-error: true
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.jira-key.outputs.issue-key }}
           transition: "Done"
+          
+      - name: ℹ️ Jira Integration Note
+        if: steps.jira-key.outputs.issue-key != ''
+        run: |
+          echo "ℹ️ Attempted to update Jira ticket: ${{ steps.jira-key.outputs.issue-key }}"
+          echo "For demo purposes, ensure tickets like DEMO-123, DEMO-124 exist in Jira"
+          echo "Pipeline will continue successfully even if Jira integration fails"
 
   # ==========================================
   # NOTIFICATIONS & REPORTING
