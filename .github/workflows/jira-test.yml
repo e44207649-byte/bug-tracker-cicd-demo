@@ -14,6 +14,13 @@ jobs:
       - name: 📦 Checkout Code
         uses: actions/checkout@v4
         
+      - name: 🔍 Debug Environment
+        run: |
+          echo "Curl version:"
+          curl --version
+          echo "Testing basic connectivity to Atlassian..."
+          curl -I https://itdemo.atlassian.net || echo "Failed to reach Atlassian"
+        
       - name: 🧪 Test Jira Connection
         run: |
           echo "Testing Jira connection..."
@@ -40,6 +47,42 @@ jobs:
           
           echo "Response from Jira API:"
           cat /tmp/jira_test.json
+          
+      - name: 🎫 Check if DEMO-2 Issue Exists
+        run: |
+          echo "Checking if DEMO-2 issue exists..."
+          
+          # Normalize URL (remove trailing slash)
+          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
+          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
+          
+          # Check if issue exists
+          echo "Issue URL: $JIRA_URL/rest/api/2/issue/DEMO-2"
+          curl -v --http1.1 \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            "$JIRA_URL/rest/api/2/issue/DEMO-2" \
+            -o /tmp/issue_check.json || echo "Issue check failed"
+          
+          echo "Issue check response:"
+          cat /tmp/issue_check.json 2>/dev/null || echo "(no response)"
+          
+      - name: 📋 List Available Projects
+        run: |
+          echo "Listing available projects..."
+          
+          # Normalize URL (remove trailing slash)
+          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
+          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
+          
+          # Get projects list
+          echo "Projects URL: $JIRA_URL/rest/api/2/project"
+          curl -v --http1.1 \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            "$JIRA_URL/rest/api/2/project" \
+            -o /tmp/projects.json || echo "Projects check failed"
+          
+          echo "Available projects:"
+          cat /tmp/projects.json 2>/dev/null || echo "(no response)"
           
       - name: 🎯 Test Comment Creation
         run: |
