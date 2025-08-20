@@ -1,23 +1,16 @@
-# TEMPORARILY DISABLED FOR JIRA TESTING
-# name: 🚀 CI/CD Pipeline - Bug Tracker Demo
+name: 🚀 CI/CD Pipeline - Bug Tracker Demo
 
-# on:
-#   push:
-#     branches: [ main, develop ]
-#   pull_request:
-#     branches: [ main ]
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
 
-# env:
-#   NODE_VERSION: '18'
-#   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+env:
+  NODE_VERSION: '18'
+  CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
 
-# jobs:
-
-# ==========================================
-# ENTIRE WORKFLOW COMMENTED OUT FOR JIRA TESTING
-# USE jira-test.yml WORKFLOW FOR TESTING
-# ==========================================
-
+jobs:
   # ==========================================
   # QUALITY ASSURANCE & TESTING
   # ==========================================
