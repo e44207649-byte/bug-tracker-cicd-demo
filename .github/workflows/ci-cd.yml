@@ -87,14 +87,14 @@ jobs:
           screenshot-on-failure: true
           
       - name: 📸 Upload Screenshots
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cypress-screenshots
           path: cypress/screenshots
           
       - name: 📹 Upload Videos
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cypress-videos
@@ -125,7 +125,7 @@ jobs:
         run: npm run build
         
       - name: 📦 Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-files
           path: |
