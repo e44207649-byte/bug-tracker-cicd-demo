@@ -1,0 +1,78 @@
+name: 🧪 Jira Integration Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-jira:
+    name: 🧪 Test Jira API
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🧪 Test Jira Connection
+        run: |
+          echo "Testing Jira connection..."
+          echo "Base URL: ${{ secrets.JIRA_BASE_URL }}"
+          echo "User Email: ${{ secrets.JIRA_USER_EMAIL }}"
+          
+          # Test basic auth
+          auth_header=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)
+          echo "Auth header created successfully"
+          
+          # Test API endpoint
+          echo "Testing Jira API endpoint..."
+          curl -v -X GET \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Basic $auth_header" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/myself" \
+            -o /tmp/jira_test.json
+          
+          echo "Response from Jira API:"
+          cat /tmp/jira_test.json
+          
+      - name: 🎯 Test Comment Creation
+        run: |
+          echo "Testing comment creation on DEMO-2..."
+          
+          # Simple comment test
+          curl -v -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            -d '{"body": "Test comment from GitHub Actions"}' \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/DEMO-2/comment" \
+            -o /tmp/comment_response.json
+          
+          echo "Comment response:"
+          cat /tmp/comment_response.json
+          
+      - name: 🔍 Test Different Approaches
+        run: |
+          echo "Testing different curl approaches..."
+          
+          # Test 1: Simple GET request first
+          echo "=== Test 1: Simple GET request ==="
+          curl -v -X GET \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/DEMO-2" || echo "GET failed"
+          
+          # Test 2: POST with minimal payload
+          echo "=== Test 2: POST with minimal payload ==="
+          curl -v -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            --data-raw '{"body":"Simple test"}' \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/DEMO-2/comment" || echo "Simple POST failed"
+          
+          # Test 3: POST with file
+          echo "=== Test 3: POST with file ==="
+          echo '{"body":"Test from file"}' > /tmp/test_payload.json
+          curl -v -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
+            --data @/tmp/test_payload.json \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/DEMO-2/comment" || echo "File POST failed"
