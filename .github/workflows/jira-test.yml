@@ -24,9 +24,9 @@ jobs:
           auth_header=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)
           echo "Auth header created successfully"
           
-          # Test API endpoint
-          echo "Testing Jira API endpoint..."
-          curl -v -X GET \
+          # Test API endpoint with HTTP/1.1 (fixes curl error 43)
+          echo "Testing Jira API endpoint with HTTP/1.1..."
+          curl -v --http1.1 \
             -H "Content-Type: application/json" \
             -H "Authorization: Basic $auth_header" \
             "${{ secrets.JIRA_BASE_URL }}/rest/api/2/myself" \
@@ -39,8 +39,8 @@ jobs:
         run: |
           echo "Testing comment creation on DEMO-2..."
           
-          # Simple comment test
-          curl -v -X POST \
+          # Simple comment test with HTTP/1.1
+          curl -v --http1.1 -X POST \
             -H "Content-Type: application/json" \
             -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
             -d '{"body": "Test comment from GitHub Actions"}' \
@@ -52,17 +52,17 @@ jobs:
           
       - name: 🔍 Test Different Approaches
         run: |
-          echo "Testing different curl approaches..."
+          echo "Testing different curl approaches with HTTP/1.1..."
           
           # Test 1: Simple GET request first
           echo "=== Test 1: Simple GET request ==="
-          curl -v -X GET \
+          curl -v --http1.1 \
             -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
             "${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/DEMO-2" || echo "GET failed"
           
           # Test 2: POST with minimal payload
           echo "=== Test 2: POST with minimal payload ==="
-          curl -v -X POST \
+          curl -v --http1.1 -X POST \
             -H "Content-Type: application/json" \
             -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
             --data-raw '{"body":"Simple test"}' \
@@ -71,7 +71,7 @@ jobs:
           # Test 3: POST with file
           echo "=== Test 3: POST with file ==="
           echo '{"body":"Test from file"}' > /tmp/test_payload.json
-          curl -v -X POST \
+          curl -v --http1.1 -X POST \
             -H "Content-Type: application/json" \
             -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64)" \
             --data @/tmp/test_payload.json \
