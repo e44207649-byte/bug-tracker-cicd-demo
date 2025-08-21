@@ -38,11 +38,12 @@ jobs:
         run: npm run test:coverage
         
       - name: 📊 Upload Coverage Reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
+          token: ${{ secrets.CODECOV_TOKEN }}
           
       - name: 💾 Cache Dependencies
         uses: actions/cache@v3
