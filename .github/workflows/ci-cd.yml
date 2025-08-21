@@ -198,16 +198,15 @@ jobs:
   # ==========================================
   # JIRA INTEGRATION - STAGING UPDATES
   # ==========================================
-  update-jira-staging:
-    name: 📝 Update Jira (Staging)
+  extract-jira-key-staging:
+    name: 📝 Extract Jira Key (Staging)
     runs-on: ubuntu-latest
     needs: deploy-staging
     if: contains(github.event.head_commit.message, 'DEMO-') || contains(github.event.pull_request.title, 'DEMO-')
+    outputs:
+      issue-key: ${{ steps.jira-key.outputs.issue-key }}
     
     steps:
-      - name: 📦 Checkout Code
-        uses: actions/checkout@v4
-        
       - name: 📝 Extract Jira Issue Key
         id: jira-key
         run: |
@@ -219,39 +218,24 @@ jobs:
           ISSUE_KEY=$(echo "$MESSAGE" | grep -oP 'DEMO-\d+' | head -1)
           echo "issue-key=$ISSUE_KEY" >> $GITHUB_OUTPUT
           echo "Found Jira issue: $ISSUE_KEY"
-          
-      - name: 📝 Add Staging Comment to Jira
-        if: steps.jira-key.outputs.issue-key != ''
-        continue-on-error: true
-        run: |
-          echo "Adding comment to Jira ticket: ${{ steps.jira-key.outputs.issue-key }}"
-          
-          # Normalize URL (remove trailing slash)
-          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
-          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
-          
-          # Create base64 auth header with no line breaks
-          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
-          
-          # Create properly formatted JSON for Jira comment
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -H "Authorization: Basic $AUTH_HEADER" \
-            -d '{
-              "body": "🚀 *Staging Deployment Complete*\n\n*Environment:* Staging\n*Deployment URL:* ${{ needs.deploy-staging.outputs.preview-url || 'Available via Vercel dashboard' }}\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}\n*Author:* ${{ github.actor }}\n\n✅ All tests passed\n✅ Quality checks passed\n✅ Deployment successful\n\nReady for testing and review!"
-            }' \
-            "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
-            -w "HTTP_STATUS:%{http_code}" \
-            -o /tmp/jira_response.json
-          
-          # Check if the request was successful
-          if grep -q "HTTP_STATUS:201" /tmp/jira_response.json 2>/dev/null; then
-            echo "✅ Successfully added comment to Jira ticket"
-          else
-            echo "⚠️ Jira comment may have failed - continuing anyway"
-            cat /tmp/jira_response.json 2>/dev/null || echo "(no response file)"
-          fi
+
+  update-jira-staging:
+    name: 📝 Update Jira (Staging)
+    needs: [deploy-staging, extract-jira-key-staging]
+    if: needs.extract-jira-key-staging.outputs.issue-key != ''
+    uses: ./.github/workflows/jira-notify.yml
+    with:
+      environment: staging
+      deployment_url: ${{ needs.deploy-staging.outputs.preview-url || 'Available via Vercel dashboard' }}
+      commit_sha: ${{ github.sha }}
+      branch_name: ${{ github.ref_name }}
+      author: ${{ github.actor }}
+      issue_key: ${{ needs.extract-jira-key-staging.outputs.issue-key }}
+      transition_to_done: false
+    secrets:
+      JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+      JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
   # ==========================================
   # DEPLOY TO PRODUCTION (MANUAL APPROVAL)
@@ -308,16 +292,15 @@ jobs:
   # ==========================================
   # JIRA INTEGRATION - PRODUCTION UPDATES
   # ==========================================
-  update-jira-production:
-    name: 📝 Update Jira (Production)
+  extract-jira-key-production:
+    name: 📝 Extract Jira Key (Production)
     runs-on: ubuntu-latest
     needs: deploy-production
     if: contains(github.event.head_commit.message, 'DEMO-')
+    outputs:
+      issue-key: ${{ steps.jira-key.outputs.issue-key }}
     
     steps:
-      - name: 📦 Checkout Code
-        uses: actions/checkout@v4
-        
       - name: 📝 Extract Jira Issue Key
         id: jira-key
         run: |
@@ -325,145 +308,49 @@ jobs:
           ISSUE_KEY=$(echo "$MESSAGE" | grep -oP 'DEMO-\d+' | head -1)
           echo "issue-key=$ISSUE_KEY" >> $GITHUB_OUTPUT
           echo "Found Jira issue: $ISSUE_KEY"
-          
-      - name: 📝 Add Production Comment to Jira
-        if: steps.jira-key.outputs.issue-key != ''
-        continue-on-error: true
-        run: |
-          echo "Adding production comment to Jira ticket: ${{ steps.jira-key.outputs.issue-key }}"
-          
-          # Normalize URL (remove trailing slash)
-          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
-          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
-          
-          # Create base64 auth header with no line breaks
-          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
-          
-          # Get current timestamp
-          DEPLOY_TIME=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          
-          # Create properly formatted JSON for Jira comment
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -H "Authorization: Basic $AUTH_HEADER" \
-            -d '{
-              "body": "🌟 *Production Deployment Complete*\n\n*Environment:* Production\n*URL:* https://bug-tracker-cicd-demo.vercel.app\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}\n*Author:* ${{ github.actor }}\n*Deployed at:* '"$DEPLOY_TIME"'\n\n✅ All quality gates passed\n✅ Staging tests successful\n✅ Production deployment verified\n✅ Health checks passed\n\n🎉 Feature is now live in production!"
-            }' \
-            "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
-            -w "HTTP_STATUS:%{http_code}" \
-            -o /tmp/jira_prod_response.json
-          
-          # Check if the request was successful
-          if grep -q "HTTP_STATUS:201" /tmp/jira_prod_response.json 2>/dev/null; then
-            echo "✅ Successfully added production comment to Jira ticket"
-          else
-            echo "⚠️ Jira comment may have failed - continuing anyway"
-            cat /tmp/jira_prod_response.json 2>/dev/null || echo "(no response file)"
-          fi
-          
-      - name: 🎯 Transition Jira Issue to Done
-        if: steps.jira-key.outputs.issue-key != ''
-        continue-on-error: true
-        run: |
-          echo "Transitioning Jira ticket to Done: ${{ steps.jira-key.outputs.issue-key }}"
-          
-          # Normalize URL (remove trailing slash)
-          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
-          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
-          
-          # Create base64 auth header with no line breaks
-          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
-          
-          # First, get available transitions to find the correct transition ID
-          echo "Getting available transitions..."
-          curl -X GET \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -H "Authorization: Basic $AUTH_HEADER" \
-            "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/transitions" \
-            -o /tmp/transitions.json
-          
-          # Try to transition to Done (this might fail if transition doesn't exist)
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -H "Authorization: Basic $AUTH_HEADER" \
-            -d '{
-              "transition": {
-                "name": "Done"
-              }
-            }' \
-            "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/transitions" \
-            -w "HTTP_STATUS:%{http_code}" \
-            -o /tmp/jira_transition_response.json
-          
-          # Check if the request was successful
-          if grep -q "HTTP_STATUS:204" /tmp/jira_transition_response.json 2>/dev/null; then
-            echo "✅ Successfully transitioned Jira ticket to Done"
-          else
-            echo "⚠️ Jira transition may have failed - this is normal if 'Done' transition doesn't exist"
-            echo "Available transitions:"
-            cat /tmp/transitions.json 2>/dev/null || echo "(could not get transitions)"
-          fi
-          
-      - name: ℹ️ Jira Integration Note
-        if: steps.jira-key.outputs.issue-key != ''
-        run: |
-          echo "ℹ️ Attempted to update Jira ticket: ${{ steps.jira-key.outputs.issue-key }}"
-          echo "For demo purposes, ensure tickets like DEMO-123, DEMO-124 exist in Jira"
-          echo "Pipeline will continue successfully even if Jira integration fails"
+
+  update-jira-production:
+    name: 📝 Update Jira (Production)
+    needs: [deploy-production, extract-jira-key-production]
+    if: needs.extract-jira-key-production.outputs.issue-key != ''
+    uses: ./.github/workflows/jira-notify.yml
+    with:
+      environment: production
+      deployment_url: https://bug-tracker-cicd-demo.vercel.app
+      commit_sha: ${{ github.sha }}
+      branch_name: ${{ github.ref_name }}
+      author: ${{ github.actor }}
+      issue_key: ${{ needs.extract-jira-key-production.outputs.issue-key }}
+      transition_to_done: true
+    secrets:
+      JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+      JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
   # ==========================================
   # NOTIFICATIONS & REPORTING
   # ==========================================
   notify-success:
     name: 📢 Success Notifications
-    runs-on: ubuntu-latest
     needs: [deploy-production, update-jira-production]
     if: always() && needs.deploy-production.result == 'success'
-    
-    steps:
-      - name: 📢 Pipeline Success Notification
-        run: |
-          echo "🎉 ===== PIPELINE SUCCESS ===== 🎉"
-          echo ""
-          echo "✅ Quality checks passed"
-          echo "✅ All tests passed"
-          echo "✅ Build successful"
-          echo "✅ Staging deployment successful"
-          echo "✅ Production deployment successful"
-          echo "✅ Health checks passed"
-          echo ""
-          echo "🌟 Production URL: https://bug-tracker-cicd-demo.vercel.app"
-          echo "🧪 Staging URL: https://bug-tracker-demo-staging.vercel.app"
-          echo ""
-          echo "📊 Commit: ${{ github.sha }}"
-          echo "🏷️ Branch: ${{ github.ref_name }}"
-          echo "👤 Author: ${{ github.actor }}"
-          echo ""
-          echo "🚀 Deployment complete!"
+    uses: ./.github/workflows/notify.yml
+    with:
+      status: success
+      commit_sha: ${{ github.sha }}
+      branch_name: ${{ github.ref_name }}
+      author: ${{ github.actor }}
+      production_url: https://bug-tracker-cicd-demo.vercel.app
+      staging_url: https://bug-tracker-demo-staging.vercel.app
 
   notify-failure:
     name: 🚨 Failure Notifications
-    runs-on: ubuntu-latest
     needs: [quality, e2e-tests, build, deploy-staging, deploy-production]
     if: always() && (needs.quality.result == 'failure' || needs.e2e-tests.result == 'failure' || needs.build.result == 'failure' || needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure')
-    
-    steps:
-      - name: 🚨 Pipeline Failure Notification
-        run: |
-          echo "🚨 ===== PIPELINE FAILURE ===== 🚨"
-          echo ""
-          echo "❌ Pipeline failed at one or more stages:"
-          echo "   - Quality checks: ${{ needs.quality.result }}"
-          echo "   - E2E tests: ${{ needs.e2e-tests.result }}"
-          echo "   - Build: ${{ needs.build.result }}"
-          echo "   - Deploy staging: ${{ needs.deploy-staging.result }}"
-          echo "   - Deploy production: ${{ needs.deploy-production.result }}"
-          echo ""
-          echo "📊 Commit: ${{ github.sha }}"
-          echo "🏷️ Branch: ${{ github.ref_name }}"
-          echo "👤 Author: ${{ github.actor }}"
-          echo ""
-          echo "🔍 Check the logs above for details"
+    uses: ./.github/workflows/notify.yml
+    with:
+      status: failure
+      commit_sha: ${{ github.sha }}
+      branch_name: ${{ github.ref_name }}
+      author: ${{ github.actor }}
+      job_results: '{"quality":"${{ needs.quality.result }}","e2e-tests":"${{ needs.e2e-tests.result }}","build":"${{ needs.build.result }}","deploy-staging":"${{ needs.deploy-staging.result }}","deploy-production":"${{ needs.deploy-production.result }}"}'

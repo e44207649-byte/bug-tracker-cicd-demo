@@ -1,0 +1,152 @@
+name: 📝 Jira Notification
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment (staging/production)'
+        required: true
+        type: string
+      deployment_url:
+        description: 'Deployment URL'
+        required: false
+        type: string
+        default: 'Available via Vercel dashboard'
+      commit_sha:
+        description: 'Commit SHA'
+        required: true
+        type: string
+      branch_name:
+        description: 'Branch name'
+        required: true
+        type: string
+      author:
+        description: 'Author name'
+        required: true
+        type: string
+      issue_key:
+        description: 'Jira issue key (e.g., DEMO-2)'
+        required: false
+        type: string
+      transition_to_done:
+        description: 'Whether to transition issue to Done'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      JIRA_BASE_URL:
+        required: true
+      JIRA_USER_EMAIL:
+        required: true
+      JIRA_API_TOKEN:
+        required: true
+
+jobs:
+  notify-jira:
+    name: 📝 Update Jira
+    runs-on: ubuntu-latest
+    if: inputs.issue_key != ''
+    
+    steps:
+      - name: 📝 Add Comment to Jira
+        continue-on-error: true
+        run: |
+          echo "Adding comment to Jira ticket: ${{ inputs.issue_key }}"
+          
+          # Normalize URL (remove trailing slash)
+          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
+          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
+          
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
+          
+          # Get current timestamp for production deployments
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            DEPLOY_TIME=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            TIMESTAMP_LINE="\n*Deployed at:* $DEPLOY_TIME"
+          else
+            TIMESTAMP_LINE=""
+          fi
+          
+          # Set emoji and title based on environment
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            EMOJI="🌟"
+            ENV_TITLE="Production"
+            EXTRA_CHECKS="\n✅ All quality gates passed\n✅ Staging tests successful\n✅ Production deployment verified\n✅ Health checks passed\n\n🎉 Feature is now live in production!"
+          else
+            EMOJI="🚀"
+            ENV_TITLE="Staging"
+            EXTRA_CHECKS="\n✅ All tests passed\n✅ Quality checks passed\n✅ Deployment successful\n\nReady for testing and review!"
+          fi
+          
+          # Create properly formatted JSON for Jira comment
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
+            -d '{
+              "body": "'"$EMOJI"' *'"$ENV_TITLE"' Deployment Complete*\n\n*Environment:* '"$ENV_TITLE"'\n*URL:* ${{ inputs.deployment_url }}\n*Commit:* ${{ inputs.commit_sha }}\n*Branch:* ${{ inputs.branch_name }}\n*Author:* ${{ inputs.author }}'"$TIMESTAMP_LINE$EXTRA_CHECKS"'"
+            }' \
+            "$JIRA_URL/rest/api/2/issue/${{ inputs.issue_key }}/comment" \
+            -w "HTTP_STATUS:%{http_code}" \
+            -o /tmp/jira_response.json
+          
+          # Check if the request was successful
+          if grep -q "HTTP_STATUS:201" /tmp/jira_response.json 2>/dev/null; then
+            echo "✅ Successfully added comment to Jira ticket"
+          else
+            echo "⚠️ Jira comment may have failed - continuing anyway"
+            cat /tmp/jira_response.json 2>/dev/null || echo "(no response file)"
+          fi
+          
+      - name: 🎯 Transition Jira Issue to Done
+        if: inputs.transition_to_done == true
+        continue-on-error: true
+        run: |
+          echo "Transitioning Jira ticket to Done: ${{ inputs.issue_key }}"
+          
+          # Normalize URL (remove trailing slash)
+          JIRA_URL="${{ secrets.JIRA_BASE_URL }}"
+          JIRA_URL=${JIRA_URL%/}  # Remove trailing slash if present
+          
+          # Create base64 auth header with no line breaks
+          AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
+          
+          # First, get available transitions to find the correct transition ID
+          echo "Getting available transitions..."
+          curl -X GET \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
+            "$JIRA_URL/rest/api/2/issue/${{ inputs.issue_key }}/transitions" \
+            -o /tmp/transitions.json
+          
+          # Try to transition to Done (this might fail if transition doesn't exist)
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $AUTH_HEADER" \
+            -d '{
+              "transition": {
+                "name": "Done"
+              }
+            }' \
+            "$JIRA_URL/rest/api/2/issue/${{ inputs.issue_key }}/transitions" \
+            -w "HTTP_STATUS:%{http_code}" \
+            -o /tmp/jira_transition_response.json
+          
+          # Check if the request was successful
+          if grep -q "HTTP_STATUS:204" /tmp/jira_transition_response.json 2>/dev/null; then
+            echo "✅ Successfully transitioned Jira ticket to Done"
+          else
+            echo "⚠️ Jira transition may have failed - this is normal if 'Done' transition doesn't exist"
+            echo "Available transitions:"
+            cat /tmp/transitions.json 2>/dev/null || echo "(could not get transitions)"
+          fi
+          
+      - name: ℹ️ Jira Integration Summary
+        run: |
+          echo "ℹ️ Jira integration completed for ticket: ${{ inputs.issue_key }}"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "URL: ${{ inputs.deployment_url }}"
+          echo "Transition to Done: ${{ inputs.transition_to_done }}"

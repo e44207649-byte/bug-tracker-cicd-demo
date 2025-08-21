@@ -1,0 +1,101 @@
+name: 📢 Pipeline Notifications
+
+on:
+  workflow_call:
+    inputs:
+      status:
+        description: 'Pipeline status (success/failure)'
+        required: true
+        type: string
+      commit_sha:
+        description: 'Commit SHA'
+        required: true
+        type: string
+      branch_name:
+        description: 'Branch name'
+        required: true
+        type: string
+      author:
+        description: 'Author name'
+        required: true
+        type: string
+      production_url:
+        description: 'Production URL'
+        required: false
+        type: string
+        default: 'https://bug-tracker-cicd-demo.vercel.app'
+      staging_url:
+        description: 'Staging URL'
+        required: false
+        type: string
+        default: 'https://bug-tracker-demo-staging.vercel.app'
+      job_results:
+        description: 'JSON object with job results'
+        required: false
+        type: string
+        default: '{}'
+
+jobs:
+  notify-success:
+    name: 📢 Success Notification
+    runs-on: ubuntu-latest
+    if: inputs.status == 'success'
+    
+    steps:
+      - name: 📢 Pipeline Success Notification
+        run: |
+          echo "🎉 ===== PIPELINE SUCCESS ===== 🎉"
+          echo ""
+          echo "✅ Quality checks passed"
+          echo "✅ All tests passed"
+          echo "✅ Build successful"
+          echo "✅ Staging deployment successful"
+          echo "✅ Production deployment successful"
+          echo "✅ Health checks passed"
+          echo ""
+          echo "🌟 Production URL: ${{ inputs.production_url }}"
+          echo "🧪 Staging URL: ${{ inputs.staging_url }}"
+          echo ""
+          echo "📊 Commit: ${{ inputs.commit_sha }}"
+          echo "🏷️ Branch: ${{ inputs.branch_name }}"
+          echo "👤 Author: ${{ inputs.author }}"
+          echo ""
+          echo "🚀 Deployment complete!"
+
+  notify-failure:
+    name: 🚨 Failure Notification
+    runs-on: ubuntu-latest
+    if: inputs.status == 'failure'
+    
+    steps:
+      - name: 🚨 Pipeline Failure Notification
+        run: |
+          echo "🚨 ===== PIPELINE FAILURE ===== 🚨"
+          echo ""
+          echo "❌ Pipeline failed at one or more stages"
+          echo ""
+          
+          # Parse job results if provided
+          if [ "${{ inputs.job_results }}" != "{}" ]; then
+            echo "Job Results:"
+            echo "${{ inputs.job_results }}" | jq -r 'to_entries[] | "   - \(.key): \(.value)"' 2>/dev/null || echo "   - Unable to parse job results"
+            echo ""
+          fi
+          
+          echo "📊 Commit: ${{ inputs.commit_sha }}"
+          echo "🏷️ Branch: ${{ inputs.branch_name }}"
+          echo "👤 Author: ${{ inputs.author }}"
+          echo ""
+          echo "🔍 Check the logs above for details"
+          
+      - name: 📧 Send Failure Alert (Optional)
+        if: inputs.status == 'failure'
+        run: |
+          echo "💡 This is where you could add:"
+          echo "   - Slack notifications"
+          echo "   - Email alerts"
+          echo "   - Discord webhooks"
+          echo "   - Microsoft Teams notifications"
+          echo ""
+          echo "Example Slack webhook:"
+          echo 'curl -X POST -H "Content-type: application/json" --data "{\"text\":\"🚨 Pipeline failed for ${{ inputs.branch_name }}\"}" $SLACK_WEBHOOK_URL'
