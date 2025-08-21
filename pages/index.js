@@ -59,8 +59,7 @@ export default function BugTracker() {
       if (filter === 'medium') return bug.severity === 'medium'
       if (filter === 'low') return bug.severity === 'low'
       // Missing: if (filter === 'critical') return bug.severity === 'critical'
-      if (filter === 'critical') return bug.severity === 'critical'
-      // return true // This causes the bug - returns all bugs for critical filter
+      return true // This causes the bug - returns all bugs for critical filter
     })
   }, [bugs, filter])
 
@@ -78,10 +77,8 @@ export default function BugTracker() {
   }, [bugs])
 
   const addBug = () => {
-    // FIX: Added validation for empty title
-    if (!newBug.title.trim()) {
-      return // Don't add bug if title is empty
-    }
+    // INTENTIONAL BUG: Missing validation for empty title
+    // Should validate: if (!newBug.title.trim()) return
     
     const bug = {
       id: Math.max(...bugs.map(b => b.id), 0) + 1,
