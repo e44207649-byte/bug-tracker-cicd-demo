@@ -86,21 +86,21 @@ describe('Bug Tracker Dashboard', () => {
       expect(screen.getAllByTestId(/^bug-\d+$/)).toHaveLength(1)
     })
 
-    // // THIS TEST WILL FAIL - DEMONSTRATES THE CRITICAL FILTER BUG
-    // test('DEMO BUG: critical filter should show only critical bugs but shows all bugs', async () => {
-    //   render(<BugTracker />)
-    //   const criticalFilter = screen.getByTestId('filter-critical')
-    //   await userEvent.click(criticalFilter)
+    // THIS TEST WILL FAIL - DEMONSTRATES THE CRITICAL FILTER BUG
+    test('DEMO BUG: critical filter should show only critical bugs but shows all bugs', async () => {
+      render(<BugTracker />)
+      const criticalFilter = screen.getByTestId('filter-critical')
+      await userEvent.click(criticalFilter)
       
-    //   // This test will fail because the critical filter is broken
-    //   // Expected: Only 1 critical bug should be shown
-    //   // Actual: All 4 bugs are shown due to the bug in the filter logic
-    //   expect(screen.getAllByTestId(/^bug-\d+$/)).toHaveLength(1) // This will fail - shows 4 instead of 1
-    //   expect(screen.getByText('Email notifications broken')).toBeInTheDocument()
-    //   expect(screen.queryByText('Login button not working on mobile')).not.toBeInTheDocument()
-    //   expect(screen.queryByText('Dashboard loading slowly')).not.toBeInTheDocument()
-    //   expect(screen.queryByText('Minor UI alignment issue')).not.toBeInTheDocument()
-    // })
+      // This test will fail because the critical filter is broken
+      // Expected: Only 1 critical bug should be shown
+      // Actual: All 4 bugs are shown due to the bug in the filter logic
+      expect(screen.getAllByTestId(/^bug-\d+$/)).toHaveLength(1) // This will fail - shows 4 instead of 1
+      expect(screen.getByText('Email notifications broken')).toBeInTheDocument()
+      expect(screen.queryByText('Login button not working on mobile')).not.toBeInTheDocument()
+      expect(screen.queryByText('Dashboard loading slowly')).not.toBeInTheDocument()
+      expect(screen.queryByText('Minor UI alignment issue')).not.toBeInTheDocument()
+    })
 
     test('returns to all bugs when all filter is selected', async () => {
       render(<BugTracker />)
@@ -158,23 +158,23 @@ describe('Bug Tracker Dashboard', () => {
       expect(screen.getByTestId('total-bugs')).toHaveTextContent('5')
     })
 
-    // // THIS TEST WILL FAIL - DEMONSTRATES THE EMPTY INPUT BUG
-    // test('DEMO BUG: should not allow adding bugs with empty title but does', async () => {
-    //   render(<BugTracker />)
-    //   const addButton = screen.getByTestId('add-bug-button')
-    //   await userEvent.click(addButton)
+    // THIS TEST WILL FAIL - DEMONSTRATES THE EMPTY INPUT BUG
+    test('DEMO BUG: should not allow adding bugs with empty title but does', async () => {
+      render(<BugTracker />)
+      const addButton = screen.getByTestId('add-bug-button')
+      await userEvent.click(addButton)
       
-    //   const submitButton = screen.getByTestId('submit-bug-button')
+      const submitButton = screen.getByTestId('submit-bug-button')
       
-    //   // Leave title empty and try to submit
-    //   await userEvent.click(submitButton)
+      // Leave title empty and try to submit
+      await userEvent.click(submitButton)
       
-    //   // The bug count should not increase
-    //   expect(screen.getByTestId('total-bugs')).toHaveTextContent('4')
+      // The bug count should not increase
+      expect(screen.getByTestId('total-bugs')).toHaveTextContent('4')
       
-    //   // The bug list should still have 4 items
-    //   expect(screen.getAllByTestId(/^bug-\d+$/)).toHaveLength(4)
-    // })
+      // The bug list should still have 4 items
+      expect(screen.getAllByTestId(/^bug-\d+$/)).toHaveLength(4)
+    })
 
     test('updates bug statistics after adding a bug', async () => {
       render(<BugTracker />)
