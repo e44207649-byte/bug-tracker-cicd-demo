@@ -59,7 +59,7 @@ export default function BugTracker() {
       if (filter === 'medium') return bug.severity === 'medium'
       if (filter === 'low') return bug.severity === 'low'
       // Missing: if (filter === 'critical') return bug.severity === 'critical'
-      return true // This causes the bug - returns all bugs for critical filter
+      // return true // This causes the bug - returns all bugs for critical filter
     })
   }, [bugs, filter])
 
