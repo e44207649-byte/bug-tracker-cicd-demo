@@ -339,13 +339,16 @@ jobs:
           # Create base64 auth header with no line breaks
           AUTH_HEADER=$(echo -n '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' | base64 -w 0)
           
+          # Get current timestamp
+          DEPLOY_TIME=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          
           # Create properly formatted JSON for Jira comment
           curl -X POST \
             -H "Content-Type: application/json" \
             -H "Accept: application/json" \
             -H "Authorization: Basic $AUTH_HEADER" \
             -d '{
-              "body": "🌟 *Production Deployment Complete*\n\n*Environment:* Production\n*URL:* https://bug-tracker-cicd-demo.vercel.app\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}\n*Author:* ${{ github.actor }}\n*Deployed at:* '$(date -u '+%Y-%m-%d %H:%M:%S UTC')'\n\n✅ All quality gates passed\n✅ Staging tests successful\n✅ Production deployment verified\n✅ Health checks passed\n\n🎉 Feature is now live in production!"
+              "body": "🌟 *Production Deployment Complete*\n\n*Environment:* Production\n*URL:* https://bug-tracker-cicd-demo.vercel.app\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}\n*Author:* ${{ github.actor }}\n*Deployed at:* '"$DEPLOY_TIME"'\n\n✅ All quality gates passed\n✅ Staging tests successful\n✅ Production deployment verified\n✅ Health checks passed\n\n🎉 Feature is now live in production!"
             }' \
             "$JIRA_URL/rest/api/2/issue/${{ steps.jira-key.outputs.issue-key }}/comment" \
             -w "HTTP_STATUS:%{http_code}" \
