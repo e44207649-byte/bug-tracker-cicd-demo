@@ -9,6 +9,7 @@ on:
 env:
   NODE_VERSION: '18'
   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
 jobs:
   # ==========================================
